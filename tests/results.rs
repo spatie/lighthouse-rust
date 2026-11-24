@@ -12,7 +12,7 @@ fn fixture() -> LighthouseResult {
 }
 
 #[test]
-fn original_category_scores_and_zero_filtering_match_php() {
+fn category_scores_keep_zero_round_percentages_and_omit_missing_values() {
     let result = fixture();
     assert_eq!(
         result.scores(),
@@ -33,9 +33,15 @@ fn original_category_scores_and_zero_filtering_match_php() {
     let result = result.set_json_report(json).unwrap();
     assert_eq!(result.score(Category::Performance), None);
     assert_eq!(result.score(Category::Accessibility), Some(0));
+    assert_eq!(result.score(Category::Seo), Some(93));
     assert_eq!(
         result.scores(),
-        [("best-practices".into(), 100), ("seo".into(), 92)].into()
+        [
+            ("accessibility".into(), 0),
+            ("best-practices".into(), 100),
+            ("seo".into(), 93)
+        ]
+        .into()
     );
 }
 

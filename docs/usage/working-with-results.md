@@ -30,7 +30,7 @@ let accessibility = result.score(Category::Accessibility);
 # }
 ```
 
-The map uses category identifiers as keys and integer percentages as values. As in PHP, `scores()` omits missing, null and zero scores. `score()` returns `Some(0)` for a real zero and `None` for missing/null. Values truncate rather than round after multiplying by 100. Map keys are sorted lexicographically.
+The map uses category identifiers as keys and integer percentages as values. `scores()` retains real zero scores and omits missing/null scores. `score()` returns `Some(0)` for a real zero and `None` for missing/null. Values round to the nearest percentage, matching Lighthouse's displayed scores. Map keys are sorted lexicographically.
 
 ## Getting audit results
 
@@ -87,7 +87,7 @@ let formatted = result.formatted_first_contentful_paint()?;
 # }
 ```
 
-These return `Result<Option<T>, Error>`. A missing audit is an error; an audit with no numeric/display value returns `None`. Availability depends on the Lighthouse version and selected audits. Time to interactive is no longer a scored performance metric, but Lighthouse 13 still includes its hidden audit. Formatted cumulative layout shift returns the original display string rather than PHP's float coercion.
+These return `Result<Option<T>, Error>`. A missing audit is an error; an audit with no numeric/display value returns `None`. Availability depends on the Lighthouse version and selected audits. Time to interactive is no longer a scored performance metric, but Lighthouse 13 still includes its hidden audit. Formatted cumulative layout shift returns the original display string.
 
 ## Getting the configuration used to generate the result
 
@@ -113,7 +113,7 @@ There are also convenience methods for interesting pieces of configuration:
 - `network_throttling_was_enabled()`: returns a boolean from the recorded flag.
 - `cpu_throttling_was_enabled()`: returns a boolean from the recorded flag.
 
-As in PHP, absent throttling-disable flags count as enabled. These flags reflect recorded configuration, not independently verified browser behavior.
+Absent throttling-disable flags count as enabled. These flags reflect recorded configuration, not independently verified browser behavior.
 
 ## Getting the raw results
 
@@ -134,9 +134,9 @@ let json = result.json_report();
 # }
 ```
 
-`get()` reads a JSON report property. `json_report()` borrows the whole JSON report and `to_array()` returns an owned copy. `raw_result()` and `config_setting()` provide the path-taking forms of PHP's optional-argument accessors. Missing paths return `None`; a present JSON null remains `Some(Value::Null)`.
+`get()` reads a JSON report property. `json_report()` borrows the whole JSON report and `to_array()` returns an owned copy. `raw_result()` and `config_setting()` read paths within the raw envelope and recorded configuration. Dot paths support objects and array indexes; exact object keys take precedence. Missing paths return `None`; a present JSON null remains `Some(Value::Null)`.
 
-The live wrapper returns the same small envelope as the PHP runner. `lhr.lighthouseVersion` only exists if you restore an older full runner result that includes `lhr`; use `report.0.lighthouseVersion` or `lighthouse_version()` for live runs.
+Use `report.0.lighthouseVersion` or `lighthouse_version()` to read the version. Live runs return a small envelope with `report` and `runtimeError`, not Lighthouse's internal runner object.
 
 ## Getting the benchmark index
 
@@ -144,7 +144,7 @@ Lighthouse computes a benchmark index as a rough approximation of the host devic
 
 ## Restoring saved reports
 
-Use `from_reports(json, html)` for separately stored reports, or `from_raw_results(raw)` for an envelope. The latter also accepts a JSON string in `report[0]`, as returned by the PHP Node script before normalization.
+Use `from_reports(json, html)` for separately stored reports, or `from_raw_results(raw)` for an envelope. The latter also accepts a JSON string in `report[0]` and normalizes it to an object. Malformed reports return an error.
 
 ```rust
 # fn main() -> Result<(), spatie_lighthouse::Error> {

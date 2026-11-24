@@ -71,7 +71,7 @@ result.save_html("report.html")?;
 
 All documentation is available [on our documentation site](https://spatie.be/docs/lighthouse-rust/v1/introduction), including [configuration](https://spatie.be/docs/lighthouse-rust/v1/usage/configuring-a-run) and [working with results](https://spatie.be/docs/lighthouse-rust/v1/usage/working-with-results).
 
-Current Lighthouse releases have four categories. Older PHP examples mentioning PWA refer to Lighthouse versions that still had that category. Metric availability also depends on the installed Lighthouse version. Lighthouse 12 removed performance budgets; generating those audits requires the optional older Lighthouse 11.7.1 runtime. See the [budget compatibility notes](https://spatie.be/docs/lighthouse-rust/v1/usage/using-performance-budgets).
+Current Lighthouse releases have four categories. Audit and metric availability depends on the installed Lighthouse version. Lighthouse 12 removed performance budgets; generating those audits requires the optional older Lighthouse 11.7.1 runtime. See [using performance budgets](https://spatie.be/docs/lighthouse-rust/v1/usage/using-performance-budgets).
 
 ## Testing
 
@@ -80,7 +80,7 @@ cargo test --locked --all-targets --all-features
 cargo test --locked --doc --all-features
 ```
 
-Install the Node dependencies with `npm ci` and make Chrome available before running the integration tests. See [all quality checks](https://github.com/spatie/lighthouse-rust/blob/main/docs/testing.md) and the [PHP parity notes](https://github.com/spatie/lighthouse-rust/blob/main/docs/parity.md). The README and Markdown guides are checked by rustdoc, including setup on hidden `# ` lines. Examples that run an external website compile without executing; local integration tests exercise real Lighthouse runs.
+Install the Node dependencies with `npm ci` and make Chrome available before running the integration tests. See [all quality checks](https://github.com/spatie/lighthouse-rust/blob/main/docs/testing.md). The README and Markdown guides are checked by rustdoc, including setup on hidden `# ` lines. Examples that run an external website compile without executing; local integration tests exercise real Lighthouse runs.
 
 ## Changelog
 

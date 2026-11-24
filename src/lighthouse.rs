@@ -64,7 +64,7 @@ impl Lighthouse {
         })
     }
 
-    /// Default PHP-compatible Lighthouse settings: desktop, four categories, no throttling.
+    /// Default Lighthouse settings: desktop, four categories, no throttling.
     #[must_use]
     pub fn default_lighthouse_config() -> Value {
         json!({

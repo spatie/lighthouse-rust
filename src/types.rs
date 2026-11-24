@@ -19,7 +19,7 @@ pub enum Category {
 }
 
 impl Category {
-    /// All categories, in the same order as the PHP package.
+    /// All categories, in Lighthouse's category order.
     pub const ALL: [Self; 4] = [
         Self::Performance,
         Self::Accessibility,

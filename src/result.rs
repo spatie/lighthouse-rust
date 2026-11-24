@@ -29,7 +29,7 @@ impl Default for LighthouseResult {
 }
 
 impl LighthouseResult {
-    /// Read the PHP-compatible raw envelope, normalizing a JSON-string report if necessary.
+    /// Read a raw report envelope, normalizing a JSON-string report if necessary.
     ///
     /// Returns a typed runtime error or rejects a missing/invalid JSON or HTML report.
     pub fn from_raw_results(mut raw: Value) -> Result<Self, Error> {
@@ -101,7 +101,7 @@ impl LighthouseResult {
         get_path(self.json_report(), path)
     }
 
-    /// An owned copy of the JSON report (PHP's `toArray()`).
+    /// An owned copy of the JSON report.
     #[must_use]
     pub fn to_array(&self) -> Value {
         self.json_report().clone()
@@ -183,24 +183,23 @@ impl LighthouseResult {
             .and_then(Value::as_object)
     }
 
-    /// One category score, truncated to a percentage; missing/null scores return `None`.
+    /// One category score, rounded to a percentage; missing/null scores return `None`.
     #[must_use]
     pub fn score(&self, category: Category) -> Option<u32> {
         self.json_report()["categories"][category.as_str()]["score"]
             .as_f64()
-            .map(|score| (score * 100.0) as u32)
+            .map(|score| (score * 100.0).round() as u32)
     }
 
-    /// Nonzero category scores, matching PHP's filtering. Use `score()` to distinguish zero.
+    /// Category scores, including real zeroes but omitting missing/null scores.
     ///
-    /// Keys are sorted lexicographically rather than preserving PHP's category order.
+    /// Keys are sorted lexicographically.
     #[must_use]
     pub fn scores(&self) -> BTreeMap<String, u32> {
         Category::ALL
             .into_iter()
             .filter_map(|category| {
                 self.score(category)
-                    .filter(|score| *score != 0)
                     .map(|score| (category.as_str().into(), score))
             })
             .collect()

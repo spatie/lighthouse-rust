@@ -17,7 +17,7 @@ let result = Lighthouse::url("https://example.com")?
 # }
 ```
 
-Configuration methods consume and return the builder. Keep the returned value when configuring it in separate statements. `run()` borrows the builder, so you can reuse a configuration.
+`url()` accepts absolute HTTP(S) URLs and returns `Error::InvalidUrl` for invalid input. Configuration methods consume and return the builder. Keep the returned value when configuring it in separate statements. `run()` borrows the builder, so you can reuse a configuration.
 
 ## Only run audits in certain categories
 
@@ -125,9 +125,9 @@ let result = Lighthouse::url("https://example.com")?
 # }
 ```
 
-As in PHP, the form factor and screen emulation are separate. Screen emulation is disabled by default; calling `screen_emulation()` replaces it. The default `ScreenEmulation` value enables desktop emulation with Lighthouse's default dimensions.
+The form factor and screen emulation are separate. Screen emulation is disabled by default; calling `screen_emulation()` replaces it. The default `ScreenEmulation` value enables desktop emulation with Lighthouse's default dimensions.
 
-`device_scale_ratio` uses Lighthouse's `deviceScaleFactor` configuration key. This corrects PHP's `deviceScaleRatio` spelling so the requested pixel ratio actually reaches Chrome.
+`device_scale_ratio` sets the number of physical pixels per CSS pixel using Lighthouse's `deviceScaleFactor` setting.
 
 ## Enable throttling
 
@@ -147,7 +147,7 @@ let result = Lighthouse::url("https://example.com")?
 
 Optionally, pass `Some(4)` to `throttle_cpu()` to set a CPU slowdown multiplier. The higher the number, the more throttling is applied. You'll find more information [in the Lighthouse docs](https://github.com/GoogleChrome/lighthouse/blob/main/docs/throttling.md#cpu-throttling).
 
-`do_not_throttle_cpu()` and `do_not_throttle_network()` turn the corresponding flags off without resetting other settings. These methods preserve PHP's configuration, including `throttle_network()` leaving the throttling method unchanged. Modern Lighthouse uses `throttlingMethod`; use `with_config()` for exact control over the simulation. The reported flags describe the submitted settings, not independent measurements of throttling.
+`do_not_throttle_cpu()` and `do_not_throttle_network()` turn the corresponding flags off without resetting other settings. `throttle_network()` leaves the throttling method unchanged. Modern Lighthouse uses `throttlingMethod`; use `with_config()` for exact control over the simulation. The reported flags describe the submitted settings, not independent measurements of throttling.
 
 ## Customize the Lighthouse configuration
 
@@ -207,6 +207,17 @@ let result = Lighthouse::url("https://example.com")?
 # }
 ```
 
-The timeout is in seconds; `max_wait_for_load()` is in milliseconds and controls only the page-load wait. Like the PHP runner, the Node timer reserves 700 ms for Chrome cleanup before the hard deadline. Timeouts must be between 1 and 2,147,483 seconds, within Node's timer range.
+The timeout is in seconds; `max_wait_for_load()` is in milliseconds and controls only the page-load wait. The Node timer reserves 700 ms for Chrome cleanup before the hard deadline. Timeouts must be between 1 and 2,147,483 seconds, within Node's timer range.
 
 Chrome is killed on normal completion, errors and Node timeouts. Rust also enforces the hard deadline and reaps Node. If Node becomes unresponsive, detached Chrome processes on Unix may need external cleanup. Use an isolated worker/container when auditing untrusted URLs. This is not an SSRF filter; restrict reachable destinations in your application or network.
+
+## Handling errors
+
+Fallible methods return `Result<T, Error>`. Use `?` to propagate errors, or match the error when your application needs different recovery behavior:
+
+- `Error::CouldNotRunLighthouse` means Node could not start, a dependency or configuration failed, or the runner returned invalid output.
+- `Error::LighthouseReportedError { code, message }` means Lighthouse ran but could not audit the page. The code identifies failures such as an unreachable page.
+- `Error::Timeout` means the overall deadline was reached.
+- `Error::Io` and `Error::Json` expose filesystem and JSON failures.
+
+The wrapper passes JSON directly to Node without a shell. URLs, headers and custom options are not interpreted as shell commands.
