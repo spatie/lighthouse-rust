@@ -1,7 +1,6 @@
 //! Real Node/Lighthouse/Chrome checks against a disposable local HTTP server.
 
 use std::{
-    io::{Read, Write},
     net::TcpListener,
     sync::{
         Arc, Mutex,
@@ -13,6 +12,7 @@ use std::{
 
 use serde_json::json;
 use spatie_lighthouse::{Category, Error, FormFactor, Lighthouse, ScreenEmulation};
+use tiny_http::{Header, Response, Server};
 
 static RUNTIME: Mutex<()> = Mutex::new(());
 
@@ -25,42 +25,29 @@ struct Page {
 
 impl Page {
     fn serve() -> Self {
-        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-        let url = format!("http://{}", listener.local_addr().unwrap());
-        listener.set_nonblocking(true).unwrap();
+        let server = Server::http("127.0.0.1:0").unwrap();
+        let url = format!("http://{}", server.server_addr());
         let stop = Arc::new(AtomicBool::new(false));
         let requests = Arc::new(Mutex::new(Vec::new()));
         let stopping = stop.clone();
         let captured = requests.clone();
         let worker = thread::spawn(move || {
             while !stopping.load(Ordering::Relaxed) {
-                match listener.accept() {
-                    Ok((mut stream, _)) => {
-                        stream
-                            .set_read_timeout(Some(Duration::from_millis(100)))
-                            .unwrap();
-                        let mut request = [0; 8192];
-                        if let Ok(length) = stream.read(&mut request) {
-                            if length == 0 {
-                                continue;
-                            }
-                            captured
-                                .lock()
-                                .unwrap()
-                                .push(String::from_utf8_lossy(&request[..length]).to_lowercase());
-                            let body = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width\"><meta name=\"description\" content=\"A local Lighthouse test page\"><title>Lighthouse test page</title><link rel=\"icon\" href=\"data:,\"></head><body><main><h1>Lighthouse test page</h1><p>This page is served locally for integration testing.</p></main></body></html>";
-                            let response = format!(
-                                "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
-                                body.len()
-                            );
-                            let _ = stream.write_all(response.as_bytes());
-                        }
-                    }
-                    Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
-                        thread::sleep(Duration::from_millis(5))
-                    }
-                    Err(error) => panic!("local test server: {error}"),
-                }
+                let Some(request) = server.recv_timeout(Duration::from_millis(50)).unwrap() else {
+                    continue;
+                };
+                captured.lock().unwrap().push(
+                    request
+                        .headers()
+                        .iter()
+                        .map(|header| header.to_string().to_lowercase())
+                        .collect::<Vec<_>>()
+                        .join("\n"),
+                );
+                let body = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width\"><meta name=\"description\" content=\"A local Lighthouse test page\"><title>Lighthouse test page</title><link rel=\"icon\" href=\"data:,\"></head><body><main><h1>Lighthouse test page</h1><p>This page is served locally for integration testing.</p></main></body></html>";
+                let response = Response::from_string(body)
+                    .with_header(Header::from_bytes("Content-Type", "text/html").unwrap());
+                let _ = request.respond(response);
             }
         });
         Self {

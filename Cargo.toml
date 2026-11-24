@@ -21,6 +21,9 @@ tempfile = "3"
 thiserror = "2"
 url = "2"
 
+[dev-dependencies]
+tiny_http = "0.12"
+
 [lints.rust]
 unsafe_code = "forbid"
 missing_docs = "warn"
