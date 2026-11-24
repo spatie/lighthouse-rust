@@ -38,4 +38,4 @@ cargo install cargo-audit --locked
 cargo audit
 ```
 
-CI runs stable checks on Linux, macOS and Windows, and the MSRV and audit checks on Linux. An audit requires access to the RustSec advisory database.
+CI runs stable checks with Lighthouse 13 on Linux, macOS and Windows, and an additional Lighthouse 11.7.1 job on Linux to exercise legacy budget audits. The MSRV and audit checks run on Linux. An audit requires access to the RustSec advisory database.

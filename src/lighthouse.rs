@@ -107,6 +107,8 @@ impl Lighthouse {
     }
 
     /// Set Lighthouse performance budgets using its JSON budget schema.
+    ///
+    /// Budget audits require Lighthouse 11; Lighthouse 12 and newer removed them.
     pub fn budgets(mut self, budgets: Vec<Value>) -> Self {
         self.config["settings"]["budgets"] = budgets.into();
         self

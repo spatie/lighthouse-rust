@@ -305,7 +305,7 @@ metric!(
     time_to_interactive_in_ms,
     formatted_time_to_interactive,
     "interactive",
-    "Time to interactive in milliseconds (older Lighthouse reports)."
+    "Time to interactive in milliseconds (a hidden, unscored audit in current Lighthouse)."
 );
 metric!(
     cumulative_layout_shift,
