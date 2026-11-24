@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "engines": { "node": ">=22.19" },
+  "dependencies": {
+    "chrome-launcher": "1.2.3",
+    "lighthouse": "13.6.0"
+  }
+}

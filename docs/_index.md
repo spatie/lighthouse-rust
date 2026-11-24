@@ -1,6 +1,6 @@
 ---
 title: v1
-slogan: {{description_quoted}}
-githubUrl: https://github.com/{{owner}}/{{repository}}
+slogan: "Run Google Lighthouse using Rust"
+githubUrl: https://github.com/spatie/lighthouse-rust
 branch: main
 ---

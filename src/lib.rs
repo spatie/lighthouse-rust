@@ -1,15 +1,14 @@
 #![doc = include_str!("../README.md")]
 
-/// Returns a greeting addressed to `name`.
-///
-/// ```rust
-/// # use {{crate_import}}::greet;
-/// assert_eq!(greet("Freek"), "Hello, Freek!");
-/// ```
-#[must_use]
-pub fn greet(name: &str) -> String {
-    format!("Hello, {name}!")
-}
+mod error;
+mod lighthouse;
+mod result;
+mod types;
+
+pub use error::Error;
+pub use lighthouse::Lighthouse;
+pub use result::LighthouseResult;
+pub use types::{Category, FormFactor, ScreenEmulation};
 
 #[cfg(doctest)]
 mod guide {

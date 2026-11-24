@@ -17,30 +17,36 @@ env:
 
 jobs:
   test:
-    name: Stable / ${{ matrix.os }}
+    name: Stable / ${{ matrix.os }} / Lighthouse ${{ matrix.lighthouse }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - { os: ubuntu-latest, lighthouse: '13.6.0' }
+          - { os: macos-latest, lighthouse: '13.6.0' }
+          - { os: windows-latest, lighthouse: '13.6.0' }
+          - { os: ubuntu-latest, lighthouse: '11.7.1' }
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-      - uses: actions/setup-python@v6
-        if: hashFiles('configure.py') != ''
+      - uses: actions/setup-node@v6
         with:
-          python-version: '3.11'
-      - name: Test template configurator
-        if: hashFiles('configure.py') != ''
-        run: python -m unittest discover -s tests -p 'test_configure.py' -v
-      - name: Configure template sample
-        if: hashFiles('configure.py') != ''
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Install legacy Lighthouse for budget compatibility
+        if: matrix.lighthouse == '11.7.1'
+        run: npm install --no-save --package-lock=false lighthouse@11.7.1
+      - uses: browser-actions/setup-chrome@v2
+        id: chrome
+      - name: Set Chrome executable
+        shell: bash
         run: |
-          python configure.py --defaults --no-check
-          cargo generate-lockfile
+          echo 'CHROME_PATH=${{ steps.chrome.outputs.chrome-path }}' >> "$GITHUB_ENV"
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --all -- --check
       - run: cargo clippy --locked --all-targets --all-features -- -D warnings
@@ -58,11 +64,17 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: 1.89.0
-      - name: Configure template sample
-        if: hashFiles('configure.py') != ''
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - uses: browser-actions/setup-chrome@v2
+        id: chrome
+      - name: Set Chrome executable
+        shell: bash
         run: |
-          python3 configure.py --defaults --no-check
-          cargo generate-lockfile
+          echo 'CHROME_PATH=${{ steps.chrome.outputs.chrome-path }}' >> "$GITHUB_ENV"
       - uses: Swatinem/rust-cache@v2
       - run: cargo +1.89.0 test --locked --all-targets --all-features
       - run: cargo +1.89.0 test --locked --doc --all-features
@@ -74,11 +86,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
-      - name: Configure template sample
-        if: hashFiles('configure.py') != ''
-        run: |
-          python3 configure.py --defaults --no-check
-          cargo generate-lockfile
       - uses: Swatinem/rust-cache@v2
       - run: cargo install cargo-audit --locked
       - run: cargo audit

@@ -1,27 +1,30 @@
-# {{description}}
+# Run Google Lighthouse using Rust
 
-[![Latest version on crates.io](https://img.shields.io/crates/v/{{crate_name}}.svg?style=flat-square)](https://crates.io/crates/{{crate_name}})
-[![Tests](https://img.shields.io/github/actions/workflow/status/{{owner}}/{{repository}}/ci.yml?branch=main&style=flat-square)](https://github.com/{{owner}}/{{repository}}/actions/workflows/ci.yml)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/{{owner}}/{{repository}}/blob/main/LICENSE.md)
-[![Total downloads](https://img.shields.io/crates/d/{{crate_name}}.svg?style=flat-square)](https://crates.io/crates/{{crate_name}})
+[![Latest version on crates.io](https://img.shields.io/crates/v/spatie-lighthouse.svg?style=flat-square)](https://crates.io/crates/spatie-lighthouse)
+[![Tests](https://img.shields.io/github/actions/workflow/status/spatie/lighthouse-rust/ci.yml?branch=main&style=flat-square)](https://github.com/spatie/lighthouse-rust/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/spatie/lighthouse-rust/blob/main/LICENSE.md)
+[![Total downloads](https://img.shields.io/crates/d/spatie-lighthouse.svg?style=flat-square)](https://crates.io/crates/spatie-lighthouse)
 
-<!--delete-->
----
-Use this template to create a Rust package:
+[Google Lighthouse](https://developer.chrome.com/docs/lighthouse/overview/) is an open-source, automated tool for improving the quality of web pages. It has audits for performance, accessibility, SEO and more.
 
-1. Press the "Use this template" button to create a new repository with this skeleton's contents.
-2. Run `python3 configure.py` (Windows: `py -3 configure.py`) to replace the placeholders and remove the template-only files.
-3. Have fun creating your package.
+This package makes it easy to run Lighthouse using Rust. It wraps an installed Node.js Lighthouse and Chrome, rather than reimplementing Lighthouse in Rust.
 
-Requires Python 3.11+ for configuration and [Rust](https://rustup.rs/) 1.89+ for the library. See [SKELETON.md](SKELETON.md) for template maintenance and non-interactive use.
+```rust,no_run
+# fn main() -> Result<(), spatie_lighthouse::Error> {
+use spatie_lighthouse::Lighthouse;
 
----
-<!--/delete-->
-{{description}}
+let result = Lighthouse::url("https://example.com")?.run()?;
+
+let scores = result.scores();
+// For example: {"accessibility": 83, "best-practices": 90, "performance": 98, "seo": 92}
+# let _ = scores;
+# Ok(())
+# }
+```
 
 ## Support us
 
-[<img src="https://spatie.be/github-ad-image/{{repository}}.jpg" alt="Support Spatie's open source work" width="419px" />](https://spatie.be/github-ad-click/{{repository}})
+[<img src="https://spatie.be/github-ad-image/lighthouse-rust.jpg" alt="Support Spatie's open source work" width="419px" />](https://spatie.be/github-ad-click/lighthouse-rust)
 
 We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
 
@@ -29,28 +32,46 @@ We highly appreciate you sending us a postcard from your hometown, mentioning wh
 
 ## Installation
 
-Requires Rust 1.89 or newer. Once the crate is published:
+Requires Rust 1.89 or newer, Node.js 22.19 or newer, and Chrome or Chromium.
 
 ```sh
-cargo add {{crate_name}}
+cargo add spatie-lighthouse
 ```
 
-Before publication, use a path dependency from a neighboring application:
+Install the Node packages in your application's working directory:
 
-```toml
-[dependencies]
-{{crate_name}} = { path = "../{{repository}}" }
+```sh
+npm install lighthouse@^13 chrome-launcher@^1
 ```
+
+If Chrome isn't detected automatically, set `CHROME_PATH` to its executable. Use `working_directory()` when the Node packages are installed in a different directory.
 
 ## Usage
 
-```rust
-use {{crate_import}}::greet;
+It's easy to configure various options:
 
-assert_eq!(greet("Freek"), "Hello, Freek!");
+```rust,no_run
+# fn main() -> Result<(), spatie_lighthouse::Error> {
+use spatie_lighthouse::{Category, Lighthouse};
+
+let result = Lighthouse::url("https://example.com")?
+    .user_agent("My user agent")
+    .headers([("MyExtraHeader", "HeaderValue")])
+    .categories([Category::Performance, Category::Accessibility])
+    .throttle_cpu(None)
+    .max_wait_for_load(5000)
+    .run()?;
+
+let audit = result.audit("first-contentful-paint")?;
+result.save_html("report.html")?;
+# let _ = audit;
+# Ok(())
+# }
 ```
 
-See the [usage guide](https://github.com/{{owner}}/{{repository}}/blob/main/docs/usage.md).
+All documentation is available [on our documentation site](https://spatie.be/docs/lighthouse-rust/v1/introduction), including [configuration](https://spatie.be/docs/lighthouse-rust/v1/usage/configuring-a-run) and [working with results](https://spatie.be/docs/lighthouse-rust/v1/usage/working-with-results).
+
+Current Lighthouse releases have four categories. Older PHP examples mentioning PWA refer to Lighthouse versions that still had that category. Metric availability also depends on the installed Lighthouse version. Lighthouse 12 removed performance budgets; generating those audits requires the optional older Lighthouse 11.7.1 runtime. See the [budget compatibility notes](https://spatie.be/docs/lighthouse-rust/v1/usage/using-performance-budgets).
 
 ## Testing
 
@@ -59,27 +80,28 @@ cargo test --locked --all-targets --all-features
 cargo test --locked --doc --all-features
 ```
 
-See [all quality checks](https://github.com/{{owner}}/{{repository}}/blob/main/docs/testing.md). The README and Markdown guides are tested by rustdoc, including setup on hidden `# ` lines.
+Install the Node dependencies with `npm ci` and make Chrome available before running the integration tests. See [all quality checks](https://github.com/spatie/lighthouse-rust/blob/main/docs/testing.md) and the [PHP parity notes](https://github.com/spatie/lighthouse-rust/blob/main/docs/parity.md). The README and Markdown guides are checked by rustdoc, including setup on hidden `# ` lines. Examples that run an external website compile without executing; local integration tests exercise real Lighthouse runs.
 
 ## Changelog
 
-See [CHANGELOG.md](https://github.com/{{owner}}/{{repository}}/blob/main/CHANGELOG.md).
+See [CHANGELOG.md](https://github.com/spatie/lighthouse-rust/blob/main/CHANGELOG.md).
 
 ## Contributing
 
-See [CONTRIBUTING.md](https://github.com/{{owner}}/{{repository}}/blob/main/CONTRIBUTING.md) and the [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/).
+See [CONTRIBUTING.md](https://github.com/spatie/lighthouse-rust/blob/main/CONTRIBUTING.md) and the [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/).
 
 Using an AI coding agent? Load Apollo's [rust-best-practices skill](https://github.com/apollographql/skills/tree/main/skills/rust-best-practices) when writing or reviewing code in this package.
 
 ## Security Vulnerabilities
 
-Report vulnerabilities privately using the instructions in [SECURITY.md](https://github.com/{{owner}}/{{repository}}/blob/main/SECURITY.md).
+Report vulnerabilities privately using the instructions in [SECURITY.md](https://github.com/spatie/lighthouse-rust/blob/main/SECURITY.md).
 
 ## Credits
 
-- [{{author_name}}](https://github.com/{{author_username}})
-- [All contributors](https://github.com/{{owner}}/{{repository}}/graphs/contributors)
+- [Freek Van der Herten](https://github.com/freekmurze)
+- [Original PHP package](https://github.com/spatie/lighthouse-php)
+- [All contributors](https://github.com/spatie/lighthouse-rust/graphs/contributors)
 
 ## License
 
-The MIT License (MIT). See [LICENSE.md](https://github.com/{{owner}}/{{repository}}/blob/main/LICENSE.md).
+The MIT License (MIT). See [LICENSE.md](https://github.com/spatie/lighthouse-rust/blob/main/LICENSE.md).
